@@ -15,6 +15,11 @@ void error(const char *msg)
   exit(1);
 }
 
+/* do_socket() creates a new AF_UNIX socket */
+int do_socket(void) {
+  return socket(AF_INET, SOCK_STREAM, 0);
+}
+
 int create_tcp_server(int portno)
 {
   int sockfd, newsockfd;
@@ -23,7 +28,8 @@ int create_tcp_server(int portno)
   struct sockaddr_in serv_addr, cli_addr;
   int n;
 
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  //sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  sockfd = do_socket();
   if (sockfd < 0)
     error("ERROR opening socket");
   bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -60,7 +66,8 @@ int create_tcp_client(char *host, int portno)
 
   char buffer[256];
 
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  //sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  sockfd = do_socket();
   if (sockfd < 0)
     error("ERROR opening socket");
   server = gethostbyname(host);

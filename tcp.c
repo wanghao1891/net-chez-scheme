@@ -33,6 +33,16 @@ int do_bind(int sockfd, int portno) {
        sizeof(serv_addr));
 }
 
+/* do_accept accepts a connection on socket s */
+int do_accept(int sockfd) {
+  socklen_t clilen;
+  struct sockaddr_in cli_addr;
+
+  return accept(sockfd,
+                (struct sockaddr *) &cli_addr,
+                &clilen);
+}
+
 int create_tcp_server(int portno)
 {
   int sockfd, newsockfd;
@@ -59,10 +69,11 @@ int create_tcp_server(int portno)
   }
 
   listen(sockfd,5);
-  clilen = sizeof(cli_addr);
-  newsockfd = accept(sockfd,
-                     (struct sockaddr *) &cli_addr,
-                     &clilen);
+//  clilen = sizeof(cli_addr);
+//  newsockfd = accept(sockfd,
+//                     (struct sockaddr *) &cli_addr,
+//                     &clilen);
+  newsockfd = do_accept(sockfd);
   if (newsockfd < 0)
     error("ERROR on accept");
   bzero(buffer,256);

@@ -40,6 +40,10 @@
   (foreign-procedure "write" (integer-32 string integer-32)
                      integer-32))
 
+(define close
+  (foreign-procedure "close" (integer-32)
+                     integer-32))
+
 #;
 (define create-tcp-server
   (foreign-procedure "create_tcp_server" (integer-32)
@@ -50,10 +54,13 @@
     (let ([sockfd (socket)])
       (bind sockfd portno)
       (listen sockfd 5)
-      (let ([new-sockfd (accept sockfd)])
-        (let ([buffer (make-string 1024)])
-          (read new-sockfd buffer 255)
-          (display buffer))
-        (write new-sockfd "I got your message ..." 25)))))
+      (let loop ()
+        (let ([new-sockfd (accept sockfd)])
+          (let ([buffer (make-string 1024)])
+            (read new-sockfd buffer 255)
+            (display buffer))
+          (write new-sockfd "I got your message ..." 25)
+          (close new-sockfd))
+        (loop)))))
 
 (create-tcp-server 6000)

@@ -32,9 +32,14 @@
   (foreign-procedure "listen" (integer-32 integer-32)
                      integer-32))
 
+#;
 (define read
   (foreign-procedure "read" (integer-32 string integer-32)
                      integer-32))
+
+  (define read
+    (foreign-procedure "do_read" (integer-32 integer-32)
+                       string))
 
 (define write
   (foreign-procedure "write" (integer-32 string integer-32)
@@ -43,6 +48,14 @@
 (define close
   (foreign-procedure "close" (integer-32)
                      integer-32))
+
+(define connect
+  (foreign-procedure "do_connect" (integer-32 string integer-32)
+                     integer-32))
+
+(define fgets
+  (foreign-procedure "do_fgets" (string integer-32)
+                     void))
 
 #;
 (define create-tcp-server
@@ -56,11 +69,18 @@
       (listen sockfd 5)
       (let loop ()
         (let ([new-sockfd (accept sockfd)])
-          (let ([buffer (make-string 1024)])
-            (read new-sockfd buffer 255)
-            (display buffer))
+          (display (read new-sockfd 255))
           (write new-sockfd "I got your message ..." 25)
           (close new-sockfd))
-        (loop)))))
+        ;;;(loop)
+        ))))
 
-(create-tcp-server 6000)
+;;(create-tcp-server 6000)
+
+(define create-tcp-client
+  (lambda (host port)
+    (let ([sockfd (socket)])
+      (connect sockfd host port)
+      (write sockfd "echo" 255)
+      (display (read sockfd 255))
+      (close sockfd))))

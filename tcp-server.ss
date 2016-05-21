@@ -57,6 +57,14 @@
   (foreign-procedure "do_fgets" (string integer-32)
                      void))
 
+(define check
+  ;; signal an error if status x is negative, using c-error to
+  ;; obtain the operating-system's error message
+  (lambda (who x)
+    (if (< x 0)
+        (error who (c-get-error x))
+        x)))
+
 #;
 (define create-tcp-server
   (foreign-procedure "create_tcp_server" (integer-32)
@@ -69,8 +77,12 @@
       (listen sockfd 5)
       (let ([new-sockfd (accept sockfd)])
         (let loop ()
-          (display (read new-sockfd 255))
-          (write new-sockfd "I got your message ..." 25)
+          (let ([message (string-append
+                          "I got your message: "
+                          (read new-sockfd 255))])
+            (display message)
+            (newline)
+            (write new-sockfd message (string-length message)))
           ;;(close new-sockfd)
           (loop))))))
 
@@ -80,6 +92,12 @@
   (lambda (host port)
     (let ([sockfd (socket)])
       (connect sockfd host port)
-      (write sockfd "echo" 255)
-      (display (read sockfd 255))
-      (close sockfd))))
+      (let ([buffer (string
+                     (integer->char
+                      (get-u8 (standard-input-port))))])
+        (display (string-append "client write: " buffer))
+        (newline)
+        (write sockfd buffer (string-length buffer)))
+      (display (string-append "client read: " (read sockfd 255)))
+      ;;(close sockfd)
+      )))

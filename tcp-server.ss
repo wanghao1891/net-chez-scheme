@@ -127,6 +127,28 @@
                      (loop))))
         (check 'close (close sockfd))))))
 
+(define create-tcp-server
+  (lambda (portno)
+    (let ([sockfd (check 'socket (socket))])
+      (check 'bind (bind sockfd portno))
+      (check 'listen (listen sockfd 5))
+      (let loop ()
+        (let ([new-sockfd (check 'accept (accept sockfd))])
+          (let loop ()
+            (define buffer (read-string new-sockfd))
+            (display buffer)
+            (if (eof-object? buffer)
+                (check 'close (close new-sockfd))
+                (begin (let ([message (string-append
+                                       "I got your message: "
+                                       buffer)])
+                         (display message)
+                         (newline)
+                         (write new-sockfd message (string-length message)))
+                       (loop)))))
+        (loop))
+      (check 'close (close sockfd)))))
+
 ;;(create-tcp-server 6000)
 
 (define create-tcp-client

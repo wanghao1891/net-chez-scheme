@@ -92,12 +92,26 @@
   (lambda (host port)
     (let ([sockfd (socket)])
       (connect sockfd host port)
-      (let ([buffer (string
-                     (integer->char
-                      (get-u8 (standard-input-port))))])
-        (display (string-append "client write: " buffer))
-        (newline)
-        (write sockfd buffer (string-length buffer)))
-      (display (string-append "client read: " (read sockfd 255)))
+      (printf "Please enter the message: ")
+      (let ([message (string (read-char))])
+        (display (string-append "client send: " message))
+        (newline) ;; this is very important, otherwise can't show the received messages
+        (write sockfd message (string-length message))
+        (read sockfd 255)
+        ;;(display (string-append "client receive: " (read sockfd 255)))
+        )
+      #;
+      (let loop ()
+
+        (let ([buffer (string
+                       (integer->char
+                        (get-u8 (standard-input-port))))])
+          (newline)
+          (display (string-append "client write: " buffer))
+          (newline)
+          (write sockfd buffer (string-length buffer)))
+        (display (string-append "client read: " (read sockfd 255)))
+        ;;(loop)
+        )
       ;;(close sockfd)
       )))

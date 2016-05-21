@@ -67,13 +67,12 @@
     (let ([sockfd (socket)])
       (bind sockfd portno)
       (listen sockfd 5)
-      (let loop ()
-        (let ([new-sockfd (accept sockfd)])
+      (let ([new-sockfd (accept sockfd)])
+        (let loop ()
           (display (read new-sockfd 255))
           (write new-sockfd "I got your message ..." 25)
-          (close new-sockfd))
-        ;;;(loop)
-        ))))
+          ;;(close new-sockfd)
+          (loop))))))
 
 ;;(create-tcp-server 6000)
 

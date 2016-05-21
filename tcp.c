@@ -102,14 +102,16 @@ int create_tcp_server(int portno)
 //                     (struct sockaddr *) &cli_addr,
 //                     &clilen);
   newsockfd = do_accept(sockfd);
-  if (newsockfd < 0)
-    error("ERROR on accept");
-  bzero(buffer,256);
-  n = read(newsockfd,buffer,255);
-  if (n < 0) error("ERROR reading from socket");
-  printf("Here is the message: %s\n",buffer);
-  n = write(newsockfd,"I got your message",18);
-  if (n < 0) error("ERROR writing to socket");
+  while(1) {
+    if (newsockfd < 0)
+      error("ERROR on accept");
+    bzero(buffer,256);
+    n = read(newsockfd,buffer,255);
+    if (n < 0) error("ERROR reading from socket");
+    printf("Here is the message: %s\n",buffer);
+    n = write(newsockfd,"I got your message",18);
+    if (n < 0) error("ERROR writing to socket");
+  }
   close(newsockfd);
   close(sockfd);
   return 0;
@@ -144,17 +146,19 @@ int create_tcp_client(char *host, int portno)
   if (do_connect(sockfd, host, portno) < 0) {
     error("ERROR connecting");
   }
-  printf("Please enter the message: ");
-  bzero(buffer,256);
-  fgets(buffer,255,stdin);
-  n = write(sockfd,buffer,strlen(buffer));
-  if (n < 0)
-    error("ERROR writing to socket");
-  bzero(buffer,256);
-  n = read(sockfd,buffer,255);
-  if (n < 0)
-    error("ERROR reading from socket");
-  printf("%s\n",buffer);
+  while(1) {
+    printf("Please enter the message: ");
+    bzero(buffer,256);
+    fgets(buffer,255,stdin);
+    n = write(sockfd,buffer,strlen(buffer));
+    if (n < 0)
+      error("ERROR writing to socket");
+    bzero(buffer,256);
+    n = read(sockfd,buffer,255);
+    if (n < 0)
+      error("ERROR reading from socket");
+    printf("%s\n",buffer);
+  }
   close(sockfd);
   return 0;
 }

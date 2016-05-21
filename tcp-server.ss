@@ -37,8 +37,27 @@
   (foreign-procedure "read" (integer-32 string integer-32)
                      integer-32))
 
-  (define read
-    (foreign-procedure "do_read" (integer-32 integer-32)
+(define c-read
+  (foreign-procedure "c_read" (int u8* int)
+                     int))
+
+; Example: (bytevector-slice #vu8(1 2 3 4 5) 3 2) => #vu8(4 5)
+(define (bytevector-slice v start n)
+  (let ([slice (make-bytevector n)])
+    (bytevector-copy! v start slice 0 n)
+    slice))
+
+(define (read-string socket)
+  (let* ([buffer-size 1024]
+         [buf (make-bytevector buffer-size)]
+         [n (check 'read (c-read socket buf buffer-size))])
+    (if (not (= n 0))
+        (bytevector->string (bytevector-slice buf 0 n)
+                            (current-transcoder))
+        (eof-object))))
+
+(define read
+  (foreign-procedure "do_read" (integer-32 integer-32)
                        string))
 
 (define write
@@ -53,16 +72,16 @@
   (foreign-procedure "do_connect" (integer-32 string integer-32)
                      integer-32))
 
-(define fgets
-  (foreign-procedure "do_fgets" (string integer-32)
-                     void))
+(define c-error
+  (foreign-procedure "get_error" ()
+                     string))
 
 (define check
-  ;; signal an error if status x is negative, using c-error to
-  ;; obtain the operating-system's error message
+ ; signal an error if status x is negative, using c-error to
+ ; obtain the operating-system's error message
   (lambda (who x)
     (if (< x 0)
-        (error who (c-get-error x))
+        (error who (c-error))
         x)))
 
 #;
@@ -72,10 +91,10 @@
 
 (define create-tcp-server
   (lambda (portno)
-    (let ([sockfd (socket)])
-      (bind sockfd portno)
-      (listen sockfd 5)
-      (let ([new-sockfd (accept sockfd)])
+    (let ([sockfd (check 'socket (socket))])
+      (check 'bind (bind sockfd portno))
+      (check 'listen (listen sockfd 5))
+      (let ([new-sockfd (check 'accept (accept sockfd))])
         (let loop ()
           (let ([message (string-append
                           "I got your message: "
@@ -85,6 +104,28 @@
             (write new-sockfd message (string-length message)))
           ;;(close new-sockfd)
           (loop))))))
+
+(define create-tcp-server
+  (lambda (portno)
+    (let ([sockfd (check 'socket (socket))])
+      (check 'bind (bind sockfd portno))
+      (check 'listen (listen sockfd 5))
+      (let ([new-sockfd (check 'accept (accept sockfd))])
+        (let loop ()
+          ;;(define buffer (make-string 1024))
+          ;;(c-read new-sockfd buffer (string-length buffer))
+          (define buffer (read-string new-sockfd))
+          (display buffer)
+          (if (eof-object? buffer)
+              (check 'close (close new-sockfd))
+              (begin (let ([message (string-append
+                                "I got your message: "
+                                buffer)])
+                  (display message)
+                  (newline)
+                  (write new-sockfd message (string-length message)))
+                     (loop))))
+        (check 'close (close sockfd))))))
 
 ;;(create-tcp-server 6000)
 
@@ -122,10 +163,14 @@
 (define create-tcp-client
   (lambda (host port)
     (let ([sockfd (socket)])
-      (connect sockfd host port)
+      (check 'connect (connect sockfd host port))
       (let ([message "world\n"])
         (display (string-append "client send: " message))
         (write sockfd message (string-length message)))
+      (read sockfd 255)
+      sockfd
+      ;;(check 'close (close sockfd))
+      #;
       (let loop ()
         (display (string-append "client receive: " (read sockfd 255)))
         (loop)))))

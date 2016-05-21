@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <errno.h>
 #include <netdb.h>
 
 void error(const char *msg)
@@ -66,9 +67,19 @@ char *do_read(int sockfd, int length) {
   return buffer;
 }
 
-void do_fgets(char *buffer, int length) {
-  printf("Please enter the message: ");
-  fgets(buffer, length, stdin);
+/* c_read pushes through interrupts and socket delays */
+int c_read(int fd, char *buf, unsigned n) {
+  int i = read(fd, buf, n);
+
+  if (i < 0)
+    return (0 - errno);
+  return i;
+}
+
+/* get_error returns the operating system's error status */
+char* get_error(void) {
+    extern int errno;
+    return strerror(errno);
 }
 
 int create_tcp_server(int portno)
@@ -146,7 +157,7 @@ int create_tcp_client(char *host, int portno)
   if (do_connect(sockfd, host, portno) < 0) {
     error("ERROR connecting");
   }
-  while(1) {
+  //while(1) {
     printf("Please enter the message: ");
     bzero(buffer,256);
     fgets(buffer,255,stdin);
@@ -158,7 +169,7 @@ int create_tcp_client(char *host, int portno)
     if (n < 0)
       error("ERROR reading from socket");
     printf("%s\n",buffer);
-  }
+    //}
   close(sockfd);
   return 0;
 }

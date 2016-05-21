@@ -98,8 +98,8 @@
           (display (string-append "client send: " message))
           (newline) ;; this is very important, otherwise can't show the received messages
           (write sockfd message (string-length message))
-          (read sockfd 255)
-          ;;(display (string-append "client receive: " (read sockfd 255)))
+          ;;(read sockfd 255)
+          (display (string-append "client receive: " (read sockfd 255)))
           )
         (read-char)
         (loop))
@@ -118,3 +118,28 @@
         )
       ;;(close sockfd)
       )))
+
+(define create-tcp-client
+  (lambda (host port)
+    (let ([sockfd (socket)])
+      (connect sockfd host port)
+      (let ([message "world\n"])
+        (display (string-append "client send: " message))
+        (write sockfd message (string-length message)))
+      (let loop ()
+        (display (string-append "client receive: " (read sockfd 255)))
+        (loop)))))
+#;
+(define create-tcp-client
+  (lambda (host port)
+    (define sockfd (socket))
+    (connect sockfd host port)
+    (write sockfd "world" (string-length "world"))
+    (do ([msg (read sockfd 255) (read sockfd 255)])
+        ((eof-object? msg) (display "Done!\n"))
+      (display msg))
+    (close sockfd)
+    #;
+    (let loop ()
+      (display (read sockfd 255))
+      (loop))))

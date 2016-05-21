@@ -6,4 +6,4 @@
   (foreign-procedure "create_tcp_client" (string integer-32)
     integer-32))
 
-(create-tcp-client "127.0.0.1" 6000)
+;;(create-tcp-client "127.0.0.1" 6000)

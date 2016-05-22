@@ -36,9 +36,46 @@
   (foreign-procedure "read" (integer-32 u8* integer-32)
                      integer-32))
 
+;; Example: (bytevector-slice #vu8(1 2 3 4 5) 3 2) => #vu8(4 5)
+(define bytevector-slice
+  (lambda (v start n)
+    (let ([slice (make-bytevector n)])
+      (bytevector-copy! v start slice 0 n)
+      slice)))
+
 (define read-string
+  (lambda (socket . options)
+    (define length 1024)
+    (if (not (null? options))
+        (set! length (car options)))
+    (let* ([buffer-size length]
+           [buf (make-bytevector buffer-size)]
+           [n (check 'read (read socket buf buffer-size))])
+      (if (not (= n 0))
+          (bytevector->string (bytevector-slice buf 0 n)
+                              (current-transcoder))
+          (eof-object)))))
+
+#;;
+(define do-read
   (foreign-procedure "do_read" (integer-32 integer-32)
-                       string))
+                     string))
+
+;; first version, length is optional, use (socket . length), length is a list
+#;;
+(define read-string
+  (lambda (socket . length)
+    (if (null? length)
+        (set! length 1024)
+        (set! length (car length)))
+    (do-read socket length)))
+
+;; second version, length is optional, use case-lambda
+#;;
+(define read-string
+  (case-lambda
+   [(socket) (do-read socket 1024)]
+   [(socket length) (do-read socket length)]))
 
 (define write
   (foreign-procedure "write" (integer-32 string integer-32)
@@ -75,14 +112,17 @@
       (check 'listen (listen sockfd 5))
       (let loop ()
         (let ([new-sockfd (check 'accept (accept sockfd))])
+          (display "client connected\n")
           (let loop ()
-            (define buffer (read-string new-sockfd 1024))
+            (define buffer (read-string new-sockfd))
             (if (eof-object? buffer)
-                (check 'close (close new-sockfd))
+                (begin (check 'close (close new-sockfd))
+                       (display "client disconnected\n"))
                 (begin (let ([message (string-append
                                        "I got your message: "
                                        buffer)])
                          (display message)
+                         (newline) ;; this line is important, otherwise can't show the new message that client send by (write-string "yes"), actually i don't know why
                          (write-string new-sockfd message))
                        (loop)))))
         (loop))
@@ -127,14 +167,19 @@
       (check 'connect (connect sockfd host port))
       (let ([message "world\n"])
         (display (string-append "client send: " message))
-        (write sockfd message (string-length message)))
-      (read sockfd 255)
+        (write-string sockfd message))
+      (display (read-string sockfd))
       sockfd
       ;;(check 'close (close sockfd))
       #;
       (let loop ()
         (display (string-append "client receive: " (read sockfd 255)))
-        (loop)))))
+      (loop)))))
+
+;;(define socket (create-tcp-client "127.0.0.1" 6000))
+;;(write-string socket "yes")
+;;(read-string socket)
+
 #;
 (define create-tcp-client
   (lambda (host port)

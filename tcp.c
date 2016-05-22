@@ -62,7 +62,7 @@ int do_connect(int sockfd, char *host, int port) {
 
 char *do_read(int sockfd, int length) {
   char *buffer = malloc(length);
-  read(sockfd, buffer, length-1);
+  read(sockfd, buffer, length);
 
   return buffer;
 }

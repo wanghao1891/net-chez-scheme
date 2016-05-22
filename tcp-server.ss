@@ -32,21 +32,26 @@
   (foreign-procedure "listen" (integer-32 integer-32)
                      integer-32))
 
-#;
 (define read
-  (foreign-procedure "read" (integer-32 string integer-32)
+  (foreign-procedure "read" (integer-32 u8* integer-32)
                      integer-32))
 
+(define read-string
+  (foreign-procedure "do_read" (integer-32 integer-32)
+                       string))
+
+#;
 (define c-read
   (foreign-procedure "c_read" (int u8* int)
                      int))
 
-; Example: (bytevector-slice #vu8(1 2 3 4 5) 3 2) => #vu8(4 5)
+;; Example: (bytevector-slice #vu8(1 2 3 4 5) 3 2) => #vu8(4 5)
+#;
 (define (bytevector-slice v start n)
   (let ([slice (make-bytevector n)])
     (bytevector-copy! v start slice 0 n)
     slice))
-
+#;
 (define (read-string socket)
   (let* ([buffer-size 1024]
          [buf (make-bytevector buffer-size)]
@@ -55,7 +60,7 @@
         (bytevector->string (bytevector-slice buf 0 n)
                             (current-transcoder))
         (eof-object))))
-
+#;
 (define read
   (foreign-procedure "do_read" (integer-32 integer-32)
                        string))
@@ -113,7 +118,7 @@
       (let ([new-sockfd (check 'accept (accept sockfd))])
         (let loop ()
           ;;(define buffer (make-string 1024))
-          ;;(c-read new-sockfd buffer (string-length buffer))
+          ;;(check 'c-read (c-read new-sockfd buffer (string-length buffer)))
           (define buffer (read-string new-sockfd))
           (display buffer)
           (if (eof-object? buffer)
@@ -144,6 +149,27 @@
                                        buffer)])
                          (display message)
                          (newline)
+                         (write new-sockfd message (string-length message)))
+                       (loop)))))
+        (loop))
+      (check 'close (close sockfd)))))
+
+(define create-tcp-server
+  (lambda (portno)
+    (let ([sockfd (check 'socket (socket))])
+      (check 'bind (bind sockfd portno))
+      (check 'listen (listen sockfd 5))
+      (let loop ()
+        (let ([new-sockfd (check 'accept (accept sockfd))])
+          (let loop ()
+            (define buffer (read-string new-sockfd 1024))
+            (if (eof-object? buffer)
+                (check 'close (close new-sockfd))
+                (begin (let ([message (string-append
+                                       "I got your message: "
+                                       buffer)])
+                         (display message)
+                         ;;(newline)
                          (write new-sockfd message (string-length message)))
                        (loop)))))
         (loop))

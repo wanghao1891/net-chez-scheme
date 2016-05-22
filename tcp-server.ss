@@ -40,34 +40,13 @@
   (foreign-procedure "do_read" (integer-32 integer-32)
                        string))
 
-#;
-(define c-read
-  (foreign-procedure "c_read" (int u8* int)
-                     int))
-
-;; Example: (bytevector-slice #vu8(1 2 3 4 5) 3 2) => #vu8(4 5)
-#;
-(define (bytevector-slice v start n)
-  (let ([slice (make-bytevector n)])
-    (bytevector-copy! v start slice 0 n)
-    slice))
-#;
-(define (read-string socket)
-  (let* ([buffer-size 1024]
-         [buf (make-bytevector buffer-size)]
-         [n (check 'read (c-read socket buf buffer-size))])
-    (if (not (= n 0))
-        (bytevector->string (bytevector-slice buf 0 n)
-                            (current-transcoder))
-        (eof-object))))
-#;
-(define read
-  (foreign-procedure "do_read" (integer-32 integer-32)
-                       string))
-
 (define write
   (foreign-procedure "write" (integer-32 string integer-32)
                      integer-32))
+
+(define write-string
+  (lambda (socket message)
+    (write socket message (string-length message))))
 
 (define close
   (foreign-procedure "close" (integer-32)
@@ -82,77 +61,12 @@
                      string))
 
 (define check
- ; signal an error if status x is negative, using c-error to
- ; obtain the operating-system's error message
+  ;; signal an error if status x is negative, using c-error to
+  ;; obtain the operating-system's error message
   (lambda (who x)
     (if (< x 0)
         (error who (c-error))
         x)))
-
-#;
-(define create-tcp-server
-  (foreign-procedure "create_tcp_server" (integer-32)
-                     integer-32))
-
-(define create-tcp-server
-  (lambda (portno)
-    (let ([sockfd (check 'socket (socket))])
-      (check 'bind (bind sockfd portno))
-      (check 'listen (listen sockfd 5))
-      (let ([new-sockfd (check 'accept (accept sockfd))])
-        (let loop ()
-          (let ([message (string-append
-                          "I got your message: "
-                          (read new-sockfd 255))])
-            (display message)
-            (newline)
-            (write new-sockfd message (string-length message)))
-          ;;(close new-sockfd)
-          (loop))))))
-
-(define create-tcp-server
-  (lambda (portno)
-    (let ([sockfd (check 'socket (socket))])
-      (check 'bind (bind sockfd portno))
-      (check 'listen (listen sockfd 5))
-      (let ([new-sockfd (check 'accept (accept sockfd))])
-        (let loop ()
-          ;;(define buffer (make-string 1024))
-          ;;(check 'c-read (c-read new-sockfd buffer (string-length buffer)))
-          (define buffer (read-string new-sockfd))
-          (display buffer)
-          (if (eof-object? buffer)
-              (check 'close (close new-sockfd))
-              (begin (let ([message (string-append
-                                "I got your message: "
-                                buffer)])
-                  (display message)
-                  (newline)
-                  (write new-sockfd message (string-length message)))
-                     (loop))))
-        (check 'close (close sockfd))))))
-
-(define create-tcp-server
-  (lambda (portno)
-    (let ([sockfd (check 'socket (socket))])
-      (check 'bind (bind sockfd portno))
-      (check 'listen (listen sockfd 5))
-      (let loop ()
-        (let ([new-sockfd (check 'accept (accept sockfd))])
-          (let loop ()
-            (define buffer (read-string new-sockfd))
-            (display buffer)
-            (if (eof-object? buffer)
-                (check 'close (close new-sockfd))
-                (begin (let ([message (string-append
-                                       "I got your message: "
-                                       buffer)])
-                         (display message)
-                         (newline)
-                         (write new-sockfd message (string-length message)))
-                       (loop)))))
-        (loop))
-      (check 'close (close sockfd)))))
 
 (define create-tcp-server
   (lambda (portno)
@@ -169,8 +83,7 @@
                                        "I got your message: "
                                        buffer)])
                          (display message)
-                         ;;(newline)
-                         (write new-sockfd message (string-length message)))
+                         (write-string new-sockfd message))
                        (loop)))))
         (loop))
       (check 'close (close sockfd)))))

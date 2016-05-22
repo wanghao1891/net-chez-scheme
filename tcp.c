@@ -67,15 +67,6 @@ char *do_read(int sockfd, int length) {
   return buffer;
 }
 
-/* c_read pushes through interrupts and socket delays */
-int c_read(int fd, char *buf, unsigned n) {
-  int i = read(fd, buf, n);
-
-  if (i < 0)
-    return (0 - errno);
-  return i;
-}
-
 /* get_error returns the operating system's error status */
 char* get_error(void) {
     extern int errno;

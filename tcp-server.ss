@@ -93,6 +93,33 @@
   (foreign-procedure "do_connect" (integer-32 string integer-32)
                      integer-32))
 
+(define kqueue
+  (foreign-procedure "kqueue" ()
+                     integer-32))
+
+(define update-kqueue
+  (foreign-procedure "update_kqueue" (integer-32 integer-32)
+                     integer-32))
+
+(define wait-events
+  (foreign-procedure "wait_events" (integer-32)
+                     integer-32))
+
+;; (define sockfd (socket))
+;; (bind sockfd 6000)
+;; (listen sockfd 5)
+;; (define kq (kqueue))
+;; (update-kqueue sockfd kq)
+;; (wait-events kq)
+
+(define set-key
+  (foreign-procedure "set_key" (string string)
+                     integer-32))
+
+(define get-key
+  (foreign-procedure "get_key" (string)
+                     string))
+
 (define c-error
   (foreign-procedure "get_error" ()
                      string))
@@ -169,28 +196,8 @@
         (display (string-append "client send: " message))
         (write-string sockfd message))
       (display (read-string sockfd))
-      sockfd
-      ;;(check 'close (close sockfd))
-      #;
-      (let loop ()
-        (display (string-append "client receive: " (read sockfd 255)))
-      (loop)))))
+      sockfd)))
 
 ;;(define socket (create-tcp-client "127.0.0.1" 6000))
 ;;(write-string socket "yes")
 ;;(read-string socket)
-
-#;
-(define create-tcp-client
-  (lambda (host port)
-    (define sockfd (socket))
-    (connect sockfd host port)
-    (write sockfd "world" (string-length "world"))
-    (do ([msg (read sockfd 255) (read sockfd 255)])
-        ((eof-object? msg) (display "Done!\n"))
-      (display msg))
-    (close sockfd)
-    #;
-    (let loop ()
-      (display (read sockfd 255))
-      (loop))))

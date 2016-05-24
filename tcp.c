@@ -9,6 +9,51 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <netdb.h>
+#include <sys/event.h>
+
+/* kevent set */
+struct kevent kevSet;
+/* events */
+struct kevent events[20];
+/* nevents */
+unsigned nevents;
+
+int update_kqueue(int sockfd, int kq) {
+  kevSet.data     = 5;    // backlog is set to 5
+  kevSet.fflags   = 0;
+  kevSet.filter   = EVFILT_READ;
+  kevSet.flags    = EV_ADD;
+  kevSet.ident    = sockfd;
+  kevSet.udata    = NULL;
+
+  /* Update kqueue */
+  return kevent(kq, &kevSet, 1, NULL, 0, NULL);
+}
+
+int wait_events(int kq) {
+  nevents = kevent(kq, NULL, 0, events, 20, NULL);
+  return nevents;
+}
+
+struct key_value {
+  char *key;
+  char *value;
+};
+
+struct key_value *kv = NULL;
+
+
+int set_key(char *key, char *value) {
+  kv = malloc(sizeof(struct key_value));
+  kv->key = key;
+  kv->value = value;
+
+  return 0;
+}
+
+char *get_key(char *key) {
+  return kv->value;
+}
 
 void error(const char *msg)
 {

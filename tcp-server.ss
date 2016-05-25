@@ -105,12 +105,27 @@
   (foreign-procedure "wait_events" (integer-32)
                      integer-32))
 
+(define get-event-ident
+  (foreign-procedure "get_event_ident" (integer-32)
+                     integer-32))
+
+(define get-event-type
+  (foreign-procedure "get_event_type" (integer-32 integer-32)
+                     string))
+
 ;; (define sockfd (socket))
 ;; (bind sockfd 6000)
 ;; (listen sockfd 5)
 ;; (define kq (kqueue))
 ;; (update-kqueue sockfd kq)
 ;; (wait-events kq)
+;; (get-event-type 0 sockfd)
+;; (define new-sockfd (accept sockfd))
+;; (update-kqueue new-sockfd kq)
+;; (wait-events kq)
+;; (define new-sockfd-1 (get-event-ident 0))
+;; (read-string new-sockfd-1)
+;; (write-string new-sockfd-1 "welcome\n")
 
 (define set-key
   (foreign-procedure "set_key" (string string)

@@ -17,6 +17,7 @@ struct kevent kevSet;
 struct kevent events[20];
 /* nevents */
 unsigned nevents;
+unsigned i = 0;
 
 int update_kqueue(int sockfd, int kq) {
   kevSet.data     = 5;    // backlog is set to 5
@@ -33,6 +34,29 @@ int update_kqueue(int sockfd, int kq) {
 int wait_events(int kq) {
   nevents = kevent(kq, NULL, 0, events, 20, NULL);
   return nevents;
+}
+
+int get_event_ident(int n) {
+  return (int)events[n].ident;
+}
+
+char *get_event_type(int n, int sockfd) {
+  struct kevent event = events[n];
+  int clientfd = (int)event.ident;
+  char *event_type;
+  //printf("  clientfd is %d", clientfd);
+  //printf("  sockfd is %d", sockfd);
+  if (event.flags & EV_EOF) {
+    event_type = "disconnect";
+  } else if (clientfd == sockfd) {
+    event_type = "accept";
+  } else if (event.flags & EVFILT_READ) {
+    event_type = "read";
+  } else {
+    event_type = "unknown";
+  }
+
+  return event_type;
 }
 
 struct key_value {

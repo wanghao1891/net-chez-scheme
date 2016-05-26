@@ -98,7 +98,7 @@
                      integer-32))
 
 (define update-kqueue
-  (foreign-procedure "update_kqueue" (integer-32 integer-32)
+  (foreign-procedure "update_kqueue" (integer-32 integer-32 integer-32)
                      integer-32))
 
 (define wait-events
@@ -117,11 +117,11 @@
 ;; (bind sockfd 6000)
 ;; (listen sockfd 5)
 ;; (define kq (kqueue))
-;; (update-kqueue sockfd kq)
+;; (update-kqueue sockfd kq 5)
 ;; (wait-events kq)
 ;; (get-event-type 0 sockfd)
 ;; (define new-sockfd (accept sockfd))
-;; (update-kqueue new-sockfd kq)
+;; (update-kqueue new-sockfd kq 0)
 ;; (wait-events kq)
 ;; (define new-sockfd-1 (get-event-ident 0))
 ;; (read-string new-sockfd-1)
@@ -216,3 +216,31 @@
 ;;(define socket (create-tcp-client "127.0.0.1" 6000))
 ;;(write-string socket "yes")
 ;;(read-string socket)
+
+(define create-kqueue-server
+  (lambda (port)
+    (define sockfd (check 'socket (socket)))
+    (check 'bind (bind sockfd port))
+    (check 'listen (listen sockfd 5))
+    (let ([kq (check 'kqueue (kqueue))])
+      (check 'update-kqueue (update-kqueue sockfd kq 5))
+      (let loop ()
+        (define event-number (wait-events kq))
+        (display (string-append "event-number is " (number->string event-number)))
+        (newline)
+        (let loop-1 ([n 0])
+          (if (< n event-number)
+              (begin
+                (let ([event-type (get-event-type n sockfd)])
+                  (display (string-append "event-type is "
+                                          event-type))
+                  (newline)
+                  (cond
+                   [(string=? event-type "accept")
+                    (let ([new-sockfd (check 'accept (accept sockfd))])
+                      (update-kqueue new-sockfd kq 0))]
+                   [(string=? event-type "read")
+                    (display (read-string (get-event-ident n)))]
+                   [else (display "other event")]))
+                (loop-1 (+ n 1)))))
+        (loop)))))

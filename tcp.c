@@ -19,8 +19,8 @@ struct kevent events[20];
 unsigned nevents;
 unsigned i = 0;
 
-int update_kqueue(int sockfd, int kq) {
-  kevSet.data     = 5;    // backlog is set to 5
+int update_kqueue(int sockfd, int kq, int data) {
+  kevSet.data     = data;    // backlog is set to 5
   kevSet.fflags   = 0;
   kevSet.filter   = EVFILT_READ;
   kevSet.flags    = EV_ADD;

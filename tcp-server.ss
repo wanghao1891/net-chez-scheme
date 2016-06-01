@@ -4,7 +4,9 @@
 ;;;   close, dup, execl, fork, kill, listen, tmpnam, unlink
 (case (machine-type)
   [(i3le ti3le) (load-shared-object "libc.so.6")]
-  [(i3osx ti3osx) (load-shared-object "libc.dylib")]
+  [(i3osx ti3osx a6osx)
+   (load-shared-object "libc.dylib")
+   (load-shared-object "libcrypto.dylib")]
   [else (load-shared-object "libc.dylib")])
 
 (display "loaded tcp.so")
@@ -146,6 +148,12 @@
     (if (< x 0)
         (error who (c-error))
         x)))
+
+(define sha-1
+  (foreign-procedure "SHA1" (string integer-32)
+                     u8*))
+
+;; (sha-1 "123456" (string-length "123456")) -> #vu8(124 74 141 9 202 55 98 175 97 229 149 32 148 61 194 100 148 248 148 27)
 
 (define create-tcp-server
   (lambda (portno)

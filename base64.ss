@@ -32,7 +32,28 @@
 
 (define encode-base64-part2
   (lambda (src)
-    '()))
+    (let [(src-length (string-length src))
+          (binary-string (char-string->binary-string src))]
+      (let [(fill-zero-binary-string (fill-zero binary-string src-length))]
+        (list->string
+         (let loop [(i 0)]
+           (cond
+            [(< i (* src-length 8))
+             (cons (substring-binary fill-zero-binary-string i (+ i 6))
+                   (loop (+ i 6)))]
+            [(= i 24)
+             '()]
+            [else
+             (cons #\= (loop (+ i 6)))])))))))
+
+(define fill-zero
+  (lambda (binary-string src-length)
+    (string-append
+     binary-string
+     (let loop [(i 0) (need-fill (- 3 src-length))]
+       (if (< i need-fill)
+           (string-append "00000000" (loop (+ i 1) need-fill))
+           "")))))
 
 ;; "010011" -> 19 -> 84 -> #\T
 (define substring-binary

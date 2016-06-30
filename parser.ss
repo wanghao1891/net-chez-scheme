@@ -11,4 +11,14 @@
 
 (string-split "abcdef" "cd")
 
+(define substring
+  (lambda (source start end)
+    (display (list->string (let loop ([s start])
+                             (cond
+                              [(= (- end s) 0)
+                               '()]
+                              [else (cons (string-ref source s) (loop (+ s 1)))]))))))
+
+(substring "abcdef" 2 5)
+
 ;; (error 'string-ref "aaa" (string-ref "hello" 4))

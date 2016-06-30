@@ -19,7 +19,7 @@
 (define encode-base64-part1
   (lambda (src)
     (let [(binary-string (char-string->binary-string src))]
-      (display binary-string) (newline)
+      ;; (display binary-string) (newline)
       (list->string
        (let loop [(i 0) (binary-string-length (string-length binary-string))]
          (cond
@@ -61,7 +61,7 @@
     (let [(decimal-value (string->number
                           (substring src start end)
                           2))]
-      (display decimal-value) (newline)
+      ;; (display decimal-value) (newline)
       (integer->char
        (cond
         [(< decimal-value 26)
@@ -107,11 +107,13 @@
 
 ;; (decimal->binary-string 7)
 ;; (char-string->binary-string "Man")
-(encode-base64 "Man")
-(encode-base64 "M")
-(encode-base64 "JavaScript")
+;; (encode-base64 "Man")
+;; (encode-base64 "M")
+;; (encode-base64 "JavaScript")
 
-(modulo 1 3)
-(modulo 3 3)
+;; (modulo 1 3)
+;; (modulo 3 3)
 
-(number->string 29 2)
+;; (number->string 29 2)
+;; (number->string 129 16)
+;; (string->utf8 "a")
